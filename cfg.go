@@ -1,60 +1,11 @@
 package gocfg
 
 import (
-	log "github.com/kordar/gologger"
-	"github.com/spf13/viper"
+	"errors"
+	"github.com/kordar/gologger"
 	"io/ioutil"
 	"path"
 )
-
-func InitConfig(filepath string) {
-	InitDefaultConfig(filepath, "ini")
-}
-
-func InitDefaultConfig(filepath string, in string) {
-	groupItem := GroupItem{
-		Group:      "default",
-		Files:      []string{filepath},
-		ExtType:    in,
-		DriverName: "viper",
-	}
-	AddCobraByGroup(groupItem)
-}
-
-func GetSystemValue(key string) string {
-	cobra := GetCobra("default", "ini", "viper")
-	return cobra.GetCfg().GetString("system." + key)
-}
-
-func GetSettingValue(key string) string {
-	cobra := GetCobra("default", "ini", "viper")
-	return cobra.GetCfg().GetString("setting." + key)
-}
-
-func GetSectionValue(section string, key string) string {
-	cobra := GetCobra("default", "ini", "viper")
-	return cobra.GetCfg().GetString(section + "." + key)
-}
-
-func GetSectionValueInt(section string, key string) int {
-	cobra := GetCobra("default", "ini", "viper")
-	return cobra.GetCfg().GetInt(section + "." + key)
-}
-
-func GetSection(section string) map[string]string {
-	cobra := GetCobra("default", "ini", "viper")
-	return cobra.GetCfg().GetStringMapString(section)
-}
-
-func UnmarshalKey(key string, rawVal interface{}, opts ...viper.DecoderConfigOption) error {
-	cfg := GetCfg()
-	return cfg.UnmarshalKey(key, rawVal, opts...)
-}
-
-func GetCfg() *viper.Viper {
-	cobra := GetCobra("default", "ini", "viper")
-	return cobra.GetCfg().GetInstance().(*viper.Viper)
-}
 
 // GetAllFile 递归获取指定目录下的所有文件名
 func GetAllFile(pathname string, ext ...string) ([]string, error) {
@@ -62,7 +13,7 @@ func GetAllFile(pathname string, ext ...string) ([]string, error) {
 
 	fis, err := ioutil.ReadDir(pathname)
 	if err != nil {
-		log.Errorf("[gocfg] 读取文件目录失败，pathname=%v, err=%v", pathname, err)
+		logger.Errorf("[gocfg] 读取文件目录失败，pathname=%v, err=%v", pathname, err)
 		return result, err
 	}
 
@@ -73,7 +24,7 @@ func GetAllFile(pathname string, ext ...string) ([]string, error) {
 		if fi.IsDir() {
 			temp, err2 := GetAllFile(fullname, ext...)
 			if err2 != nil {
-				log.Errorf("[gocfg] 读取文件目录失败,fullname=%v, err=%v", fullname, err)
+				logger.Errorf("[gocfg] 读取文件目录失败,fullname=%v, err=%v", fullname, err)
 				return result, err2
 			}
 			result = append(result, temp...)
@@ -97,9 +48,8 @@ func GetAllFile(pathname string, ext ...string) ([]string, error) {
 
 func InitConfigWithDir(group string, parent string, ext ...string) {
 	files, err := GetAllFile(parent, ext...)
-	//log.Infof("----------------%+v", files)
 	if err != nil {
-		log.Panic("[gocfg] init cobra fail!")
+		logger.Panic("[gocfg] init cobra fail!")
 		return
 	}
 	configItems := make([]ConfigItem, 0)
@@ -122,7 +72,7 @@ func InitConfigWithDir(group string, parent string, ext ...string) {
 func InitConfigWithSubDir(dir string, ext ...string) {
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Fatalf("[gocfg] 读取文件目录失败，pathname=%v, err=%v", dir, err)
+		logger.Fatalf("[gocfg] 读取文件目录失败，pathname=%v, err=%v", dir, err)
 		return
 	}
 	for _, fi := range fis {
@@ -171,4 +121,24 @@ func GetGroupSection(group string, section string) map[string]string {
 		return map[string]string{}
 	}
 	return cobra.GetCfg().GetStringMapString(section)
+}
+
+func GroupUnmarshalKey(group string, section string, raw interface{}) error {
+	cobra := GetCobraWithKey(group, section)
+	if cobra == nil {
+		return errors.New("not found config")
+	}
+	return cobra.GetCfg().UnmarshalKey(section, raw)
+}
+
+func GetGroupDriver(group string) Driver {
+	return GetCobra(group, "ini", "viper").GetCfg()
+}
+
+func GroupGet(group string, key string) interface{} {
+	cobra := GetCobraWithKey(group, key)
+	if cobra == nil {
+		return nil
+	}
+	return cobra.GetCfg().Get(key)
 }

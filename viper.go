@@ -2,8 +2,8 @@ package gocfg
 
 import (
 	"bytes"
+	"github.com/kordar/gologger"
 	"github.com/spf13/viper"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -30,7 +30,7 @@ func (v *ViperDriver) init(files []string, ext string) {
 	}
 	err := v.ins.ReadInConfig()
 	if err != nil {
-		log.Panicln(err)
+		logger.Panic(err)
 	}
 	for _, s := range files {
 		if file, err2 := os.ReadFile(s); err2 == nil {
@@ -159,4 +159,16 @@ func (v *ViperDriver) IsSet(key string) bool {
 
 func (v *ViperDriver) AllSettings() map[string]interface{} {
 	return v.ins.AllSettings()
+}
+
+func (v *ViperDriver) Unmarshal(rawVal interface{}) error {
+	return v.ins.Unmarshal(rawVal)
+}
+
+func (v *ViperDriver) UnmarshalExact(rawVal interface{}) error {
+	return v.ins.UnmarshalExact(rawVal)
+}
+
+func (v *ViperDriver) UnmarshalKey(key string, rawVal interface{}) error {
+	return v.ins.UnmarshalKey(key, rawVal)
 }

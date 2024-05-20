@@ -1,6 +1,8 @@
 package gocfg
 
-import "time"
+import (
+	"time"
+)
 
 type Driver interface {
 	GetName() string
@@ -26,6 +28,9 @@ type Driver interface {
 	GetSizeInBytes(key string) uint
 	IsSet(key string) bool
 	AllSettings() map[string]interface{}
+	Unmarshal(rawVal interface{}) error
+	UnmarshalExact(rawVal interface{}) error
+	UnmarshalKey(key string, rawVal interface{}) error
 }
 
 func CreateDriver(name string) Driver {
