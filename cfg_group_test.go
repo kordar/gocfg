@@ -11,10 +11,10 @@ import (
 
 func TestDefaultCfg(t *testing.T) {
 	gocfg.InitEnv("G", "profile")
-	_ = os.Setenv("G_PROFILE", "dev")
+	_ = os.Setenv("G_PROFILE", "")
 	//gocfg.InitConfig("conf/conf.ini")
 	gocfg.InitConfigWithDir("default", "conf", "ini", "toml", "yaml")
-	value := gocfg.GetGroupSection("default", "mm")
+	value := gocfg.GetGroupSection("default", "system")
 	logger.Infof("===============%v", value)
 
 	//value := gocfg.GetSystemValue("ee")

@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"path"
+	"strings"
 )
 
 var (
@@ -57,19 +58,55 @@ func loadConfig(v *viper.Viper, files []string, exts ...string) *viper.Viper {
 		mm[s] = true
 	}
 
-	for _, filepath := range files {
-		ext := path.Ext(filepath)[1:]
+	newFiles := make([]string, 0)
+	devFiles := make([]string, 0)
+	proFiles := make([]string, 0)
+	testFiles := make([]string, 0)
+
+	for _, filename := range files {
+		ext := path.Ext(filename)[1:]
 		if !mm[ext] {
 			continue
 		}
+		if strings.Contains(filename, "-dev.") {
+			devFiles = append(devFiles, filename)
+			continue
+		}
+		if strings.Contains(filename, "-pro.") {
+			proFiles = append(proFiles, filename)
+			continue
+		}
+		if strings.Contains(filename, "-test.") {
+			testFiles = append(testFiles, filename)
+			continue
+		}
+		newFiles = append(newFiles, filename)
+	}
+
+	mergeConfig(v, newFiles)
+	// -----------
+	profile := viper.GetString("PROFILE")
+	if profile == DEV {
+		mergeConfig(v, devFiles)
+	}
+	if profile == PRO {
+		mergeConfig(v, proFiles)
+	}
+	if profile == TEST {
+		mergeConfig(v, testFiles)
+	}
+
+	return v
+}
+
+func mergeConfig(v *viper.Viper, files []string) {
+	for _, filename := range files {
 		newViper := viper.New()
-		newViper.SetConfigFile(filepath)
+		newViper.SetConfigFile(filename)
 		if err := newViper.ReadInConfig(); err == nil {
 			_ = v.MergeConfigMap(newViper.AllSettings())
 		}
 	}
-
-	return v
 }
 
 // 递归获取指定目录下的所有文件名
