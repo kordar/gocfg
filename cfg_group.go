@@ -5,62 +5,102 @@ import (
 	"github.com/spf13/viper"
 )
 
-func GetGroupViper(group string) *viper.Viper {
-	return groups[group]
+func GetGroupViper(groupName string) *viper.Viper {
+	return GetViperObj(groupName)
 }
 
-func GetGroupSystemValue(group string, key string) string {
-	v := groups[group]
+func SetGroupViper(groupName string, v *viper.Viper) {
+	item := groups[groupName]
+	if item == nil {
+		item = NewElement(groupName)
+		item.SetValue(v)
+		groups[groupName] = item
+		return
+	}
+	item.SetValue(v)
+}
+
+func WriteGroupConfig(groupName string, b []byte) {
+	item := groups[groupName]
+	if item != nil {
+		item.Write(b)
+	}
+}
+
+func WriteGroupConfigMap(groupName string, cfg map[string]interface{}) {
+	item := groups[groupName]
+	if item != nil {
+		item.WriteMap(cfg)
+	}
+}
+
+func UpdateGroupValue(groupName string, key string, value interface{}) {
+	item := groups[groupName]
+	if item != nil {
+		item.Update(key, value)
+	}
+}
+
+func GetGroupSystemValue(groupName string, key string) string {
+	v := GetViperObj(groupName)
 	if v == nil {
 		return ""
 	}
 	return v.GetString("system." + key)
 }
 
-func GetGroupSettingValue(group string, key string) string {
-	v := groups[group]
+func GetGroupSettingValue(groupName string, key string) string {
+	v := GetViperObj(groupName)
 	if v == nil {
 		return ""
 	}
 	return v.GetString("setting." + key)
 }
 
-func GetGroupSectionValue(group string, section string, key string) string {
-	v := groups[group]
+func GetGroupSectionValue(groupName string, section string, key string) string {
+	v := GetViperObj(groupName)
 	if v == nil {
 		return ""
 	}
 	return v.GetString(section + "." + key)
 }
 
-func GetGroupSectionValueInt(group string, section string, key string) int {
-	v := groups[group]
+func GetGroupSectionValueInt(groupName string, section string, key string) int {
+	v := GetViperObj(groupName)
 	if v == nil {
 		return 0
 	}
 	return v.GetInt(section + "." + key)
 }
 
-func GetGroupSection(group string, section string) map[string]string {
-	v := groups[group]
+func GetGroupSection(groupName string, section string) map[string]string {
+	v := GetViperObj(groupName)
 	if v == nil {
 		return map[string]string{}
 	}
 	return v.GetStringMapString(section)
 }
 
-func GroupUnmarshalKey(group string, section string, raw interface{}) error {
-	v := groups[group]
+func GroupUnmarshalKey(groupName string, section string, raw interface{}) error {
+	v := GetViperObj(groupName)
 	if v == nil {
 		return errors.New("not found config")
 	}
 	return v.UnmarshalKey(section, raw)
 }
 
-func GroupGet(group string, key string) interface{} {
-	v := groups[group]
+func GroupGet(groupName string, key string) interface{} {
+	v := GetViperObj(groupName)
 	if v == nil {
 		return nil
 	}
 	return v.Get(key)
+}
+
+func GroupSub(groupName string, key string) *viper.Viper {
+	v := GetViperObj(groupName)
+	if v == nil {
+		return nil
+	}
+	return v.Sub(key)
 }

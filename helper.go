@@ -9,8 +9,15 @@ import (
 )
 
 var (
-	groups = make(map[string]*viper.Viper)
+	groups = make(map[string]*Element)
 )
+
+func GetViperObj(name string) *viper.Viper {
+	if groups[name] == nil {
+		return nil
+	}
+	return groups[name].GetValue()
+}
 
 // InitConfigWithSubDir 初始化子目录作为group，适用于多语言场景或不同开发环境
 func InitConfigWithSubDir(dir string, ext ...string) {
@@ -32,7 +39,10 @@ func InitConfig(filepath string) {
 }
 
 func InitDefaultConfig(filepath string, in string) {
-	groups["default"] = loadConfig(viper.New(), []string{filepath}, in)
+	config := loadConfig(viper.New(), []string{filepath}, in)
+	g := NewElement("default")
+	g.SetValue(config)
+	groups[g.name] = g
 }
 
 func InitConfigWithDir(group string, parent string, ext ...string) {
@@ -45,7 +55,10 @@ func InitCustomerConfigWithDir(v *viper.Viper, group string, parent string, ext 
 		logger.Panic("[gocfg] init cobra fail!")
 		return
 	}
-	groups[group] = loadConfig(v, files, ext...)
+	config := loadConfig(v, files, ext...)
+	g := NewElement(group)
+	g.SetValue(config)
+	groups[g.name] = g
 }
 
 func loadConfig(v *viper.Viper, files []string, exts ...string) *viper.Viper {

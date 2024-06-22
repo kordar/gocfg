@@ -1,12 +1,14 @@
 package gocfg_test
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/kordar/gocfg"
 	logger "github.com/kordar/gologger"
 	"github.com/spf13/viper"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestDefaultCfg(t *testing.T) {
@@ -45,4 +47,56 @@ func TestT22(t *testing.T) {
 	str := v.GetStringMap("d")
 
 	logger.Infof("==========%+v", str)
+}
+
+func TestRW(t *testing.T) {
+	gocfg.InitConfigWithDir("default", "conf", "ini", "toml", "yaml")
+	var name = "default"
+
+	var yamlExample = []byte(`
+Hacker: true
+name: steve
+hobbies:
+- skateboarding
+- snowboarding
+- go
+mm:
+ jacket: leather
+ trousers: denim
+age: 35
+eyes: brown
+beard: true
+`)
+
+	v := viper.New()
+	v.SetConfigType("yaml")
+	err := v.ReadConfig(bytes.NewBuffer(yamlExample))
+	if err != nil {
+		logger.Error(err)
+	}
+	get := v.Get("mm")
+	logger.Infof("------------------%v", get)
+
+	//viper.ReadConfig(bytes.NewBuffer(yamlExample))
+
+	for i := 0; i < 50; i++ {
+		read(name, "mm")
+		//if i%5 == 0 {
+		//	write(name, map[string]interface{}{"mm": map[string]interface{}{"cc": fmt.Sprintf("dd-%d", i), "hai": int64(1234)}})
+		//}
+		if i%21 == 0 {
+			gocfg.UpdateGroupValue(name, "mm", map[string]interface{}{"dddd": "we3"})
+		}
+		//read(name, "mm")
+	}
+	time.Sleep(30 * time.Second)
+}
+
+func read(name string, key string) {
+	section := gocfg.GetGroupSection(name, key)
+	logger.Infof("read======%v", section)
+}
+
+func write(name string, m map[string]interface{}) {
+	gocfg.WriteGroupConfigMap(name, m)
 }
