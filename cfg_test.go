@@ -13,10 +13,10 @@ import (
 
 func TestDefaultCfg(t *testing.T) {
 	gocfg.InitEnv("G", "profile")
-	_ = os.Setenv("G_PROFILE", "")
+	_ = os.Setenv("G_PROFILE", "dev")
 	//gocfg.InitConfig("conf/conf.ini")
 	gocfg.InitConfigWithDir("default", "conf", "ini", "toml", "yaml")
-	value := gocfg.GetGroupSection("default", "system")
+	value := gocfg.GetSection("system", nil)
 	logger.Infof("===============%v", value)
 
 	//value := gocfg.GetSystemValue("ee")
@@ -85,7 +85,7 @@ beard: true
 		//	write(name, map[string]interface{}{"mm": map[string]interface{}{"cc": fmt.Sprintf("dd-%d", i), "hai": int64(1234)}})
 		//}
 		if i%21 == 0 {
-			gocfg.UpdateGroupValue(name, "mm", map[string]interface{}{"dddd": "we3"})
+			gocfg.UpdateValue(name, "mm", map[string]interface{}{"dddd": "we3"})
 		}
 		//read(name, "mm")
 	}
@@ -93,10 +93,38 @@ beard: true
 }
 
 func read(name string, key string) {
-	section := gocfg.GetGroupSection(name, key)
+	section := gocfg.GetSection(name, key)
 	logger.Infof("read======%v", section)
 }
 
 func write(name string, m map[string]interface{}) {
-	gocfg.WriteGroupConfigMap(name, m)
+	gocfg.WriteConfigMap(m, name)
+}
+
+func TestInitConfigWithParentDir(t *testing.T) {
+	gocfg.InitConfigWithParentDir("language", "ini")
+	logger.Infof("===================%v", gocfg.AllSections("language"))
+	logger.Infof("===================%v", gocfg.Get("en.system.aaa", "language"))
+	v := viper.New()
+	v.Set("en", map[string]interface{}{"aa": "EEEEE"})
+	gocfg.SetViper(v, "language")
+	logger.Infof("===================%v", gocfg.AllSections("language"))
+	logger.Infof("===================%v", gocfg.GetSectionValue("en", "aa", "language"))
+
+}
+
+func TestT003(t *testing.T) {
+	var a = func(b ...interface{}) {
+		switch b[0].(type) {
+		case string:
+			logger.Info("string =", b)
+			break
+		case nil:
+			logger.Infof("xxxxeeeeeeee")
+			break
+		default:
+			logger.Infof("ccccc")
+		}
+	}
+	a(nil)
 }
