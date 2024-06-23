@@ -15,11 +15,11 @@ func groupName(options ...interface{}) string {
 }
 
 func GetViper(options ...interface{}) *viper.Viper {
-	return GetViperObj(groupName(options))
+	return GetViperObj(groupName(options...))
 }
 
 func SetViper(v *viper.Viper, options ...interface{}) {
-	name := groupName(options)
+	name := groupName(options...)
 	item := groups[name]
 	if item == nil {
 		item = NewElement(name)
@@ -31,7 +31,7 @@ func SetViper(v *viper.Viper, options ...interface{}) {
 }
 
 func WriteConfig(b []byte, options ...interface{}) {
-	name := groupName(options)
+	name := groupName(options...)
 	item := groups[name]
 	if item != nil {
 		item.Write(b)
@@ -39,7 +39,7 @@ func WriteConfig(b []byte, options ...interface{}) {
 }
 
 func WriteConfigMap(cfg map[string]interface{}, options ...interface{}) {
-	name := groupName(options)
+	name := groupName(options...)
 	item := groups[name]
 	if item != nil {
 		item.WriteMap(cfg)
@@ -47,7 +47,7 @@ func WriteConfigMap(cfg map[string]interface{}, options ...interface{}) {
 }
 
 func UpdateValue(key string, value interface{}, options ...interface{}) {
-	name := groupName(options)
+	name := groupName(options...)
 	item := groups[name]
 	if item != nil {
 		item.Update(key, value)
@@ -55,7 +55,7 @@ func UpdateValue(key string, value interface{}, options ...interface{}) {
 }
 
 func Get(key string, options ...interface{}) interface{} {
-	name := groupName(options)
+	name := groupName(options...)
 	v := GetViperObj(name)
 	if v == nil {
 		return nil
@@ -64,7 +64,7 @@ func Get(key string, options ...interface{}) interface{} {
 }
 
 func GetSystemValue(key string, options ...interface{}) string {
-	name := groupName(options)
+	name := groupName(options...)
 	v := GetViperObj(name)
 	if v == nil {
 		return ""
@@ -73,7 +73,7 @@ func GetSystemValue(key string, options ...interface{}) string {
 }
 
 func GetSettingValue(key string, options ...interface{}) string {
-	name := groupName(options)
+	name := groupName(options...)
 	v := GetViperObj(name)
 	if v == nil {
 		return ""
@@ -82,7 +82,7 @@ func GetSettingValue(key string, options ...interface{}) string {
 }
 
 func GetSectionValue(section string, key string, options ...interface{}) string {
-	name := groupName(options)
+	name := groupName(options...)
 	v := GetViperObj(name)
 	if v == nil {
 		return ""
@@ -91,7 +91,7 @@ func GetSectionValue(section string, key string, options ...interface{}) string 
 }
 
 func GetSectionValueInt(section string, key string, options ...interface{}) int {
-	name := groupName(options)
+	name := groupName(options...)
 	v := GetViperObj(name)
 	if v == nil {
 		return 0
@@ -100,7 +100,7 @@ func GetSectionValueInt(section string, key string, options ...interface{}) int 
 }
 
 func GetSection(section string, options ...interface{}) map[string]string {
-	name := groupName(options)
+	name := groupName(options...)
 	v := GetViperObj(name)
 	if v == nil {
 		return map[string]string{}
@@ -109,7 +109,7 @@ func GetSection(section string, options ...interface{}) map[string]string {
 }
 
 func UnmarshalKey(section string, raw interface{}, options ...interface{}) error {
-	name := groupName(options)
+	name := groupName(options...)
 	v := GetViperObj(name)
 	if v == nil {
 		return errors.New("not found config")
@@ -118,7 +118,7 @@ func UnmarshalKey(section string, raw interface{}, options ...interface{}) error
 }
 
 func Sub(key string, options ...interface{}) *viper.Viper {
-	name := groupName(options)
+	name := groupName(options...)
 	v := GetViperObj(name)
 	if v == nil {
 		return nil
@@ -127,7 +127,7 @@ func Sub(key string, options ...interface{}) *viper.Viper {
 }
 
 func AllSections(options ...interface{}) map[string]interface{} {
-	name := groupName(options)
+	name := groupName(options...)
 	v := GetViperObj(name)
 	if v == nil {
 		return map[string]interface{}{}

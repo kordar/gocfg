@@ -104,7 +104,7 @@ func write(name string, m map[string]interface{}) {
 func TestInitConfigWithParentDir(t *testing.T) {
 	gocfg.InitConfigWithParentDir("language", "ini")
 	logger.Infof("===================%v", gocfg.AllSections("language"))
-	logger.Infof("===================%v", gocfg.Get("en.system.aaa", "language"))
+	logger.Infof("===================%v", gocfg.GetSectionValue("zh_CN", "system.aa", "language"))
 	v := viper.New()
 	v.Set("en", map[string]interface{}{"aa": "EEEEE"})
 	gocfg.SetViper(v, "language")
