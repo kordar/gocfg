@@ -6,6 +6,10 @@ import (
 )
 
 func groupName(options ...interface{}) string {
+	if options == nil || len(options) == 0 {
+		return "default"
+	}
+
 	switch options[0].(type) {
 	case string:
 		return options[0].(string)
