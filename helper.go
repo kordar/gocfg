@@ -19,7 +19,7 @@ func GetViperObj(name string) *viper.Viper {
 	return groups[name].GetValue()
 }
 
-func InitConfigWithParentDir(parent string, ext ...string) {
+func InitConfigWithParentDirG(group string, parent string, ext ...string) {
 	fis, err := ioutil.ReadDir(parent)
 	if err != nil {
 		logger.Fatalf("[gocfg] 读取文件目录失败，pathname=%v, err=%v", parent, err)
@@ -33,9 +33,13 @@ func InitConfigWithParentDir(parent string, ext ...string) {
 		}
 	}
 	config := loadSubConfig(viper.New(), subDirs, ext...)
-	g := NewElement(parent)
+	g := NewElement(group)
 	g.SetValue(config)
 	groups[g.name] = g
+}
+
+func InitConfigWithParentDir(parent string, ext ...string) {
+	InitConfigWithParentDirG(parent, parent, ext...)
 }
 
 // InitConfigWithSubDir 初始化子目录作为group，适用于多语言场景或不同开发环境

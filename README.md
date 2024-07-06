@@ -1,79 +1,113 @@
 # gocfg 
 
-> 通过集成多种配置三方库实现配置操作统计界面，目前仅实现viper集成
+对`viper`进行二次开发，实现`viper`对象分组操作，整合不同初始化方式实现多种方式配置初始化。
 
+## 初始化
 
+- 默认初始化
 
-- 初始化配置文件
-
-```go 
-func InitConfig(filepath string)  // 初始化ini配置文件 
-func InitDefaultConfig(filepath string, in string) // 初始化自定义后缀配置文件 ini toml yaml 等
-func InitConfigWithDir(group string, parent string, ext ...string) // 初始化某个目录下的所有ext扩展的文件，group目录名称，parent目录地址，ext扩展名
-// InitConfigWithSubDir 初始化子目录作为group，适用于多语言场景或不同开发环境
-func InitConfigWithSubDir(dir string, ext ...string)
-```
-
-- 基本操作
+提供多种初始化形式供不同场景配置使用
 
 ```go
+InitConfig("./conf/conf.ini") // 默认分组default
+```
+注：该方式仅支持`ini`配置文件，传参为文件所在路径。
 
-func GetSystemValue(key string) string 
+- 设置扩展名
 
-func GetSettingValue(key string) string 
+```go
+InitDefaultConfig("./conf/conf.yaml", "yaml")  // 默认分组default
+```
 
-func GetSectionValue(section string, key string) 
+- 通过目录加载该目录下所有符合扩展的配置
 
-func GetSectionValueInt(section string, key string) int 
+```go
+InitConfigWithDir("default", "./conf", "ini", "yaml") 
+```
 
-func GetSection(section string) map[string]string 
+扫描`./conf`目录下的所有`.ini`，`.yaml`的配置文件，并关联到分组`default`下的`viper`(该对象使用合并方式生成)对象。
 
-func UnmarshalKey(key string, rawVal interface{}, opts ...viper.DecoderConfigOption) error
+- 通过目录扫描子目录并生成配置
 
-func GetCfg() *viper.Viper 
+```go
+InitConfigWithParentDir("./conf", "ini", "yaml")  // 请使用InitConfigWithParentDirG指定group名称
+InitConfigWithParentDirG("language", "./conf", "ini", "yaml")  // 分组language
+
+// 目录结构
+/**
+    language
+        - en
+            - a.ini
+        - zh
+            - b.yaml
+ */
+
+// 获取方式
+gocfg.GetSectionValue("zh", "bb", "language")
+```
+
+注：该方式生成的对象为单`viper`对象，该对象第一层key名称为子目录第一级。应用场景多为多语言配置项目
 
 
+- 扫描目录将子目录第一层作为group生成配置
 
+```go
+InitConfigWithSubDir(dir string, ext ...string)  
+```
 
-func GetGroupSystemValue(group string, key string) string {
-	cobra := GetCobraWithKey(group, "system."+key)
-	if cobra == nil {
-		return ""
-	}
-	return cobra.GetCfg().GetString("system." + key)
-}
+注：该方式生成的配置为多个`viper`对象，`group`值为当前目录子目录第一层目录名称。
 
-func GetGroupSettingValue(group string, key string) string {
-	cobra := GetCobraWithKey(group, "setting."+key)
-	if cobra == nil {
-		return ""
-	}
-	return cobra.GetCfg().GetString("setting." + key)
-}
+- 自定义viper对象生成配置
 
-func GetGroupSectionValue(group string, section string, key string) string {
-	cobra := GetCobraWithKey(group, section+"."+key)
-	if cobra == nil {
-		return ""
-	}
-	return cobra.GetCfg().GetString(section + "." + key)
-}
-
-func GetGroupSectionValueInt(group string, section string, key string) int {
-	cobra := GetCobraWithKey(group, section+"."+key)
-	if cobra == nil {
-		return 0
-	}
-	return cobra.GetCfg().GetInt(section + "." + key)
-}
-
-func GetGroupSection(group string, section string) map[string]string {
-	cobra := GetCobraWithKey(group, section)
-	if cobra == nil {
-		return map[string]string{}
-	}
-	return cobra.GetCfg().GetStringMapString(section)
-}
+```go
+InitCustomerConfigWithDir(v *viper.Viper, group string, parent string, ext ...string)
 ```
 
 
+## 使用
+
+注：所有`API`中`options[0]`参数表示`groupName`值，默认值"`default`"
+
+- 获取`viper`对象
+
+```go
+func GetViper(options ...interface{}) *viper.Viper
+```
+
+- 设置`viper`对象
+
+```go
+func SetViper(v *viper.Viper, options ...interface{})
+```
+
+- 向指定`group`中写入字节码
+
+```go
+func WriteConfig(b []byte, options ...interface{})
+```
+
+- 向指定`group`中写入`map`对象
+
+```go
+func WriteConfigMap(cfg map[string]interface{}, options ...interface{})
+```
+
+- 更新`key`中的`value`值
+
+```go
+func UpdateValue(key string, value interface{}, options ...interface{})
+```
+
+- 查询相关`API`
+
+```go
+func Get(key string, options ...interface{}) interface{}
+func GetSystemValue(key string, options ...interface{}) string
+func GetSettingValue(key string, options ...interface{}) string
+func GetSectionValue(section string, key string, options ...interface{}) string
+func GetSectionValueInt(section string, key string, options ...interface{}) int
+func GetSection(section string, options ...interface{}) map[string]string
+func UnmarshalKey(section string, raw interface{}, options ...interface{}) error
+func Sub(key string, options ...interface{}) *viper.Viper
+func AllSections(options ...interface{}) map[string]interface{}
+```
