@@ -111,3 +111,11 @@ func UnmarshalKey(section string, raw interface{}, options ...interface{}) error
 func Sub(key string, options ...interface{}) *viper.Viper
 func AllSections(options ...interface{}) map[string]interface{}
 ```
+
+## 环境变量扩展
+
+```go
+gocfg.InitEnv("G", "profile")
+_ = os.Setenv("G_PROFILE", "dev")
+```
+设置文件名为`*-dev.*` `*-pro.*` `*-test.*`三种模式。通过`profile`参数值匹配文件名，实现不同环境配置加载。
