@@ -1,28 +1,21 @@
 package gocfg
 
 import (
+	"errors"
 	logger "github.com/kordar/gologger"
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"path"
-	"strings"
 )
 
-var (
-	groups = make(map[string]*Element)
-)
-
-func GetViperObj(name string) *viper.Viper {
-	if groups[name] == nil {
-		return nil
-	}
-	return groups[name].GetValue()
+func GetViperObj() *viper.Viper {
+	return GetSnippet("default").GetValue()
 }
 
-func InitConfigWithParentDirG(group string, parent string, ext ...string) {
+func InitConfigWithParentDir(parent string, ext ...string) {
 	fis, err := ioutil.ReadDir(parent)
 	if err != nil {
-		logger.Fatalf("[gocfg] 读取文件目录失败，pathname=%v, err=%v", parent, err)
+		logger.Fatalf("[gocfg] failed to read the file directory，pathname=%v, err=%v", parent, err)
 		return
 	}
 	subDirs := make([]string, 0)
@@ -32,29 +25,9 @@ func InitConfigWithParentDirG(group string, parent string, ext ...string) {
 			subDirs = append(subDirs, subname)
 		}
 	}
-	config := loadSubConfig(viper.New(), subDirs, ext...)
-	g := NewElement(group)
-	g.SetValue(config)
-	groups[g.name] = g
-}
-
-func InitConfigWithParentDir(parent string, ext ...string) {
-	InitConfigWithParentDirG(parent, parent, ext...)
-}
-
-// InitConfigWithSubDir 初始化子目录作为group，适用于多语言场景或不同开发环境
-func InitConfigWithSubDir(dir string, ext ...string) {
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
-		logger.Fatalf("[gocfg] 读取文件目录失败，pathname=%v, err=%v", dir, err)
-		return
-	}
-	for _, fi := range fis {
-		fullname := path.Join(dir, fi.Name())
-		if fi.IsDir() {
-			InitConfigWithDir(fi.Name(), fullname, ext...)
-		}
-	}
+	viperObj := GetViperObj()
+	config := LoadSubConfig(viperObj, subDirs, ext...)
+	GetSnippet("default").SetValue(config)
 }
 
 func InitConfig(filepath string) {
@@ -62,152 +35,110 @@ func InitConfig(filepath string) {
 }
 
 func InitDefaultConfig(filepath string, in string) {
-	config := loadConfig(viper.New(), []string{filepath}, in)
-	g := NewElement("default")
-	g.SetValue(config)
-	groups[g.name] = g
+	viperObj := GetViperObj()
+	config := LoadConfig(viperObj, []string{filepath}, in)
+	GetSnippet("default").SetValue(config)
 }
 
-func InitConfigWithDir(group string, parent string, ext ...string) {
-	InitCustomerConfigWithDir(viper.New(), group, parent, ext...)
+func InitConfigWithDir(parent string, ext ...string) {
+	viperObj := GetViperObj()
+	InitCustomerConfigWithDir(viperObj, parent, ext...)
 }
 
-func InitCustomerConfigWithDir(v *viper.Viper, group string, parent string, ext ...string) {
-	files, err := getAllFile(parent, ext...)
+func InitCustomerConfigWithDir(v *viper.Viper, parent string, ext ...string) {
+	files, err := GetAllFile(parent, ext...)
 	if err != nil {
 		logger.Panic("[gocfg] init cobra fail!")
 		return
 	}
-	config := loadConfig(v, files, ext...)
-	g := NewElement(group)
-	g.SetValue(config)
-	groups[g.name] = g
+	config := LoadConfig(v, files, ext...)
+	GetSnippet("default").SetValue(config)
 }
 
-func loadSubConfig(v *viper.Viper, subDirs []string, exts ...string) *viper.Viper {
-	if len(subDirs) == 0 {
-		return v
-	}
-
-	for _, dir := range subDirs {
-		files, err := getAllFile(dir, exts...)
-		if err != nil {
-			logger.Panic("[gocfg] init cobra fail!")
-			continue
-		}
-
-		vv := viper.New()
-		name := path.Base(dir)
-		for _, filename := range files {
-			newViper := viper.New()
-			newViper.SetConfigFile(filename)
-			if err2 := newViper.ReadInConfig(); err2 == nil {
-				_ = vv.MergeConfigMap(newViper.AllSettings())
-			}
-		}
-
-		v.Set(name, vv.AllSettings())
-	}
-
-	return v
+func SetViper(v *viper.Viper) {
+	GetSnippet("default").SetValue(v)
 }
 
-func loadConfig(v *viper.Viper, files []string, exts ...string) *viper.Viper {
-	if len(files) == 0 {
-		return v
-	}
-
-	mm := make(map[string]bool)
-	for _, s := range exts {
-		mm[s] = true
-	}
-
-	newFiles := make([]string, 0)
-	devFiles := make([]string, 0)
-	proFiles := make([]string, 0)
-	testFiles := make([]string, 0)
-
-	for _, filename := range files {
-		ext := path.Ext(filename)[1:]
-		if !mm[ext] {
-			continue
-		}
-		if strings.Contains(filename, "-dev.") {
-			devFiles = append(devFiles, filename)
-			continue
-		}
-		if strings.Contains(filename, "-pro.") {
-			proFiles = append(proFiles, filename)
-			continue
-		}
-		if strings.Contains(filename, "-test.") {
-			testFiles = append(testFiles, filename)
-			continue
-		}
-		newFiles = append(newFiles, filename)
-	}
-
-	mergeConfig(v, newFiles)
-	// -----------
-	profile := viper.GetString("PROFILE")
-	if profile == DEV {
-		mergeConfig(v, devFiles)
-	}
-	if profile == PRO {
-		mergeConfig(v, proFiles)
-	}
-	if profile == TEST {
-		mergeConfig(v, testFiles)
-	}
-
-	return v
+func WriteConfig(b []byte) {
+	GetSnippet("default").Write(b)
 }
 
-func mergeConfig(v *viper.Viper, files []string) {
-	for _, filename := range files {
-		newViper := viper.New()
-		newViper.SetConfigFile(filename)
-		if err := newViper.ReadInConfig(); err == nil {
-			_ = v.MergeConfigMap(newViper.AllSettings())
-		}
-	}
+func WriteConfigMap(cfg map[string]interface{}) {
+	GetSnippet("default").WriteMap(cfg)
 }
 
-// 递归获取指定目录下的所有文件名
-func getAllFile(pathname string, ext ...string) ([]string, error) {
-	result := make([]string, 0)
+func UpdateValue(key string, value interface{}) {
+	GetSnippet("default").Update(key, value)
+}
 
-	fis, err := ioutil.ReadDir(pathname)
-	if err != nil {
-		logger.Errorf("[gocfg] 读取文件目录失败，pathname=%v, err=%v", pathname, err)
-		return result, err
+func Get(key string) interface{} {
+	v := GetViperObj()
+	if v == nil {
+		return nil
 	}
+	return v.Get(key)
+}
 
-	// 所有文件/文件夹
-	for _, fi := range fis {
-		fullname := path.Join(pathname, fi.Name())
-		// 是文件夹则递归进入获取;是文件，则压入数组
-		if fi.IsDir() {
-			temp, err2 := getAllFile(fullname, ext...)
-			if err2 != nil {
-				logger.Errorf("[gocfg] 读取文件目录失败,fullname=%v, err=%v", fullname, err)
-				return result, err2
-			}
-			result = append(result, temp...)
-		} else {
-			suffix := path.Ext(fullname)[1:]
-			flag := false
-			for _, s := range ext {
-				if suffix == s {
-					flag = true
-					break
-				}
-			}
-			if flag {
-				result = append(result, fullname)
-			}
-		}
+func GetSystemValue(key string) string {
+	v := GetViperObj()
+	if v == nil {
+		return ""
 	}
+	return v.GetString("system." + key)
+}
 
-	return result, nil
+func GetSettingValue(key string) string {
+	v := GetViperObj()
+	if v == nil {
+		return ""
+	}
+	return v.GetString("setting." + key)
+}
+
+func GetSectionValue(section string, key string) string {
+	v := GetViperObj()
+	if v == nil {
+		return ""
+	}
+	return v.GetString(section + "." + key)
+}
+
+func GetSectionValueInt(section string, key string) int {
+	v := GetViperObj()
+	if v == nil {
+		return 0
+	}
+	return v.GetInt(section + "." + key)
+}
+
+func GetSection(section string) map[string]string {
+	v := GetViperObj()
+	if v == nil {
+		return map[string]string{}
+	}
+	return v.GetStringMapString(section)
+}
+
+func UnmarshalKey(section string, raw interface{}) error {
+	v := GetViperObj()
+	if v == nil {
+		return errors.New("not found config")
+	}
+	return v.UnmarshalKey(section, raw)
+}
+
+func Sub(key string) *viper.Viper {
+	v := GetViperObj()
+	if v == nil {
+		return nil
+	}
+	return v.Sub(key)
+}
+
+func AllSections() map[string]interface{} {
+	v := GetViperObj()
+	if v == nil {
+		return map[string]interface{}{}
+	}
+	return v.AllSettings()
 }

@@ -1,7 +1,5 @@
 package gocfg
 
-import "github.com/spf13/viper"
-
 const (
 	DEV  = "dev"
 	PRO  = "pro"
@@ -9,9 +7,13 @@ const (
 )
 
 func InitEnv(prefix string, envs ...string) {
-	viper.AllowEmptyEnv(true)
-	viper.SetEnvPrefix(prefix) // 将自动转为大写
-	err := viper.BindEnv(envs...)
+	obj := GetViperObj()
+	if obj == nil {
+		return
+	}
+	obj.AllowEmptyEnv(true)
+	obj.SetEnvPrefix(prefix) // 将自动转为大写
+	err := obj.BindEnv(envs...)
 	if err != nil {
 		panic(err)
 	}
