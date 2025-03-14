@@ -36,8 +36,6 @@ eyes: brown
 beard: true
 `)
 
-	gocfg.WriteConfig(yamlExample)
-
 	v := viper.New()
 	v.SetConfigType("yaml")
 	_ = v.ReadConfig(bytes.NewBuffer(yamlExample))

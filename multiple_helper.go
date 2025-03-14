@@ -40,67 +40,67 @@ func GetSnippet(name string) *Snippet {
 	return handles[name]
 }
 
-func SetViperG(v *viper.Viper, name string) {
+func SetViperM(v *viper.Viper, name string) {
 	snippet := GetSnippet(name)
 	snippet.SetValue(v)
 }
 
-func WriteConfigG(b []byte, name string) {
+func WriteConfigM(b []byte, name string) {
 	snippet := GetSnippet(name)
 	snippet.Write(b)
 }
 
-func WriteConfigMapG(cfg map[string]interface{}, name string) {
+func WriteConfigMapM(cfg map[string]interface{}, name string) {
 	snippet := GetSnippet(name)
 	snippet.WriteMap(cfg)
 }
 
-func UpdateValueG(key string, value interface{}, name string) {
+func UpdateValueM(key string, value interface{}, name string) {
 	snippet := GetSnippet(name)
 	snippet.Update(key, value)
 }
 
-func GetG(key string, name string) interface{} {
+func GetM(key string, name string) interface{} {
 	snippet := GetSnippet(name)
 	return snippet.GetValue().Get(key)
 }
 
-func GetSystemValueG(key string, name string) string {
+func GetSystemValueM(key string, name string) string {
 	snippet := GetSnippet(name)
 	return snippet.GetValue().GetString("system." + key)
 }
 
-func GetSettingValueG(key string, name string) string {
+func GetSettingValueM(key string, name string) string {
 	snippet := GetSnippet(name)
 	return snippet.GetValue().GetString("setting." + key)
 }
 
-func GetSectionValueG(section string, key string, name string) string {
+func GetSectionValueM(section string, key string, name string) string {
 	snippet := GetSnippet(name)
 	return snippet.GetValue().GetString(section + "." + key)
 }
 
-func GetSectionValueIntG(section string, key string, name string) int {
+func GetSectionValueIntM(section string, key string, name string) int {
 	snippet := GetSnippet(name)
 	return snippet.GetValue().GetInt(section + "." + key)
 }
 
-func GetSectionG(section string, name string) map[string]string {
+func GetSectionM(section string, name string) map[string]string {
 	snippet := GetSnippet(name)
 	return snippet.GetValue().GetStringMapString(section)
 }
 
-func UnmarshalKeyG(section string, raw interface{}, name string) error {
+func UnmarshalKeyM(section string, raw interface{}, name string) error {
 	snippet := GetSnippet(name)
 	return snippet.GetValue().UnmarshalKey(section, raw)
 }
 
-func SubG(key string, name string) *viper.Viper {
+func SubM(key string, name string) *viper.Viper {
 	snippet := GetSnippet(name)
 	return snippet.GetValue().Sub(key)
 }
 
-func AllSectionsG(name string) map[string]interface{} {
+func AllSectionsM(name string) map[string]interface{} {
 	snippet := GetSnippet(name)
 	return snippet.GetValue().AllSettings()
 }

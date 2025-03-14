@@ -48,7 +48,7 @@ func InitConfigWithDir(parent string, ext ...string) {
 func InitCustomerConfigWithDir(v *viper.Viper, parent string, ext ...string) {
 	files, err := GetAllFile(parent, ext...)
 	if err != nil {
-		logger.Panic("[gocfg] init cobra fail!")
+		logger.Panic("[gocfg] init snippet fail!")
 		return
 	}
 	config := LoadConfig(v, files, ext...)

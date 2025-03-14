@@ -1,7 +1,7 @@
 package gocfg
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 	"github.com/spf13/viper"
 )
 
@@ -123,7 +123,7 @@ func (l *MultipleCfg) UnmarshalKey(section string, raw interface{}, args ...inte
 	if snippet != nil {
 		return snippet.GetValue().UnmarshalKey(section, raw)
 	}
-	return errors.Errorf("[gocfg] snippet does not exist.")
+	return errors.New("[gocfg] snippet does not exist.")
 }
 
 func (l *MultipleCfg) Sub(key string, args ...interface{}) *viper.Viper {
